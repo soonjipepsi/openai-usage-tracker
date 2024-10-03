@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import json
 
-# 2024-10-02 Cost information
+# 2024-10-04 Cost information
 cost_rates = {
     'gpt-4o-05-13': {'input': 0.005, 'output': 0.015},
     'gpt-4o-08-06': {'input': 0.0025, 'output': 0.015},
