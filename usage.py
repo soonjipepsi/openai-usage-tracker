@@ -4,45 +4,69 @@ import pandas as pd
 import numpy as np
 import json
 
-# 2024-10-04 Cost information
+# 2024-10-07 Cost Information
 cost_rates = {
-    'gpt-4o-05-13': {'input': 0.005, 'output': 0.015},
-    'gpt-4o-08-06': {'input': 0.0025, 'output': 0.015},
-    'gpt-4': {'input': 0.030, 'output': 0.060},
-    'gpt-4-turbo': {'input': 0.010, 'output': 0.030},
-    'gpt-4o-mini': {'input': 0.00015, 'output': 0.0006},
-    'gpt-3.5': {'input': 0.0005, 'output': 0.0015},
-    'text-embedding-3-small': {'input': 0.00002},
-    'text-embedding-3-large': {'input': 0.00013},
-    'dall-e-3': {'input': 0.04},  # per image
-    'whisper': {'input': 0.006 / 60},  # per second
-    'tts': {'input': 0.015 / 1000}  # per character
+    'gpt-4o-2024-05-13': {'input': 0.00500, 'output': 0.01500},
+    'gpt-4o-2024-08-06': {'input': 0.00250, 'output': 0.01000},
+    'gpt-4o': {'input': 0.00250, 'output': 0.01000},
+    'gpt-4': {'input': 0.03000, 'output': 0.06000},
+    'gpt-4-turbo': {'input': 0.01000, 'output': 0.03000},
+    'gpt-4o-mini-2024-07-18': {'input': 0.000150, 'output': 0.000600},
+    'gpt-4o-mini': {'input': 0.000150, 'output': 0.000600},
+    'gpt-3.5-turbo': {'input': 0.003000, 'output': 0.006000},
+    'text-embedding-3-small': {'input': 0.000020},
+    'text-embedding-3-large': {'input': 0.000130},
+    'ada-v2': {'input': 0.000100},
+    'dall-e-3-standard': {'input': 0.040},   # per image
+    'dall-e-3-hd': {'input': 0.080},         # per image
+    'whisper': {'input': 0.006 / 60},        # per second
+    'tts': {'input': 0.015 / 1000},          # per character
+    'tts-hd': {'input': 0.030 / 1000},       # per character
+    'o1-preview': {'input': 0.01500, 'output': 0.06000},
+    'o1-mini': {'input': 0.00300, 'output': 0.01200},
+    'gpt-4o-realtime-preview': {'input': 0.00500, 'output': 0.02000}
 }
 
 # Simplify model name function
 def simplify_model_name(model_name):
     if 'gpt-4' in model_name and 'turbo' in model_name:
         return 'gpt-4-turbo'
+    elif 'gpt-4o' in model_name and 'mini' in model_name and '2024-07-18' in model_name:
+        return 'gpt-4o-mini-2024-07-18'
     elif 'gpt-4o' in model_name and 'mini' in model_name:
         return 'gpt-4o-mini'
     elif 'gpt-4o' in model_name and '2024-08-06' in model_name:
-        return 'gpt-4o-08-06'
+        return 'gpt-4o-2024-08-06'
+    elif 'gpt-4o' in model_name and '2024-05-13' in model_name:
+        return 'gpt-4o-2024-05-13'
     elif 'gpt-4o' in model_name:
-        return 'gpt-4o-05-13'
+        return 'gpt-4o'
     elif 'gpt-4' in model_name:
         return 'gpt-4'
     elif 'gpt-3.5' in model_name:
-        return 'gpt-3.5'
+        return 'gpt-3.5-turbo'
+    elif 'o1-preview' in model_name:
+        return 'o1-preview'
+    elif 'o1-mini' in model_name:
+        return 'o1-mini'
     elif 'text-embedding-3-small' in model_name:
         return 'text-embedding-3-small'
     elif 'text-embedding-3-large' in model_name:
         return 'text-embedding-3-large'
-    elif 'dall-e' in model_name:
-        return 'dall-e-3'
+    elif 'ada-v2' in model_name:
+        return 'ada-v2'
+    elif 'dall-e-3' in model_name and 'hd' in model_name.lower():
+        return 'dall-e-3-hd'
+    elif 'dall-e-3' in model_name:
+        return 'dall-e-3-standard'
     elif 'whisper' in model_name:
         return 'whisper'
+    elif 'tts-hd' in model_name:
+        return 'tts-hd'
     elif 'tts' in model_name:
         return 'tts'
+    elif 'gpt-4o-realtime-preview' in model_name:
+        return 'gpt-4o-realtime-preview'
     else:
         return 'other'
 
@@ -50,25 +74,32 @@ def simplify_model_name(model_name):
 def calculate_cost(row):
     model = row['simplified_model']
     rates = cost_rates.get(model, {})
-    if model in ['gpt-4', 'gpt-4-turbo', 'gpt-4o-05-13', 'gpt-4o-08-06', 'gpt-4o-mini', 'gpt-3.5']:
+    if model in [
+        'gpt-4', 'gpt-4-turbo',
+        'gpt-4o-2024-05-13', 'gpt-4o-2024-08-06', 'gpt-4o',
+        'gpt-4o-mini-2024-07-18', 'gpt-4o-mini',
+        'gpt-3.5-turbo', 'o1-preview', 'o1-mini',
+        'gpt-4o-realtime-preview'
+    ]:
         input_cost = (row['total_context_tokens'] / 1000) * rates.get('input', 0)
         output_cost = (row['total_generated_tokens'] / 1000) * rates.get('output', 0)
         return input_cost + output_cost
-    elif model in ['text-embedding-3-small', 'text-embedding-3-large']:
+    elif model in ['text-embedding-3-small', 'text-embedding-3-large', 'ada-v2']:
         total_tokens = row['total_context_tokens'] + row['total_generated_tokens']
         cost = (total_tokens / 1000) * rates.get('input', 0)
         return cost
-    elif model == 'dall-e-3':
+    elif model in ['dall-e-3-standard', 'dall-e-3-hd']:
         cost = row['total_requests'] * rates.get('input', 0)
         return cost
     elif model == 'whisper':
         cost = row['total_seconds'] * rates.get('input', 0)
         return cost
-    elif model == 'tts':
+    elif model in ['tts', 'tts-hd']:
         cost = row['total_characters'] * rates.get('input', 0)
         return cost
     else:
         return 0
+
 
 # Case 1: Fetch data from API using input_date
 def case1(input_date):
