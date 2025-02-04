@@ -9,8 +9,11 @@ cost_rates = {
     # GPT Models
     'chatgpt-4o-latest': {'input': 0.00500, 'output': 0.01500},
     'gpt-4-turbo': {'input': 0.01000, 'output': 0.03000},
+    'gpt-4-turbo-2024-04-09' : {'input': 0.01000, 'output': 0.03000},
+
     'gpt-4': {'input': 0.03000, 'output': 0.06000},
     'gpt-4-32k': {'input': 0.06000, 'output': 0.12000},
+    'gpt-4-0613': {'input': 0.03000, 'output': 0.06000},
     'gpt-4-0125-preview': {'input': 0.01000, 'output': 0.03000},
     'gpt-4-1106-preview': {'input': 0.01000, 'output': 0.03000},
     'gpt-4-vision-preview': {'input': 0.01000, 'output': 0.03000},
@@ -22,9 +25,10 @@ cost_rates = {
     'gpt-3.5-turbo-16k-0613': {'input': 0.00300, 'output': 0.00400},
     'gpt-3.5-turbo-0301': {'input': 0.00150, 'output': 0.00200},
 
+
     # GPT-4o 
     'gpt-4o-2024-05-13': {'input': 0.00500, 'output': 0.01500},
-    'gpt-4o-2024-08-06': {'input': 0.00250, 'output': 0.01000},
+    'gpt-4o-2024-08-06': {'input': 0.00375, 'output': 0.01500},
     'gpt-4o-2024-11-20': {'input': 0.00250, 'output': 0.01000},
     'gpt-4o': {'input': 0.00250, 'output': 0.01000},
     'gpt-4o-mini-2024-07-18': {'input': 0.000150, 'output': 0.000600},
@@ -48,8 +52,9 @@ cost_rates = {
     'tts-hd': {'input': 0.030 / 1000}, # per character
 
     # O1 
+    'o1-2024-12-17' : {'input': 0.01500, 'output': 0.06000},
     'o1-preview': {'input': 0.01500, 'output': 0.06000},
-    'o1-mini': {'input': 0.00300, 'output': 0.01200},
+    'o1-mini': {'input': 0.00110, 'output': 0.00440},
 }
 # Simplify model name function
 def simplify_model_name(model_name):
@@ -61,6 +66,8 @@ def simplify_model_name(model_name):
         return 'gpt-4-turbo'
     elif 'gpt-4-32k' in model_name:
         return 'gpt-4-32k'
+    elif 'gpt-4' in model_name and '0613' in model_name:
+        return 'gpt-4-0613'
     elif 'gpt-4' in model_name and '0125' in model_name:
         return 'gpt-4-0125-preview'
     elif 'gpt-4' in model_name and '1106' in model_name:
@@ -115,6 +122,8 @@ def simplify_model_name(model_name):
         return 'tts'
     elif 'o1-preview' in model_name:
         return 'o1-preview'
+    elif 'o1-2024-12-17' in model_name:
+        return 'o1-2024-12-17'
     elif 'o1-mini' in model_name:
         return 'o1-mini'
     else:
@@ -127,12 +136,12 @@ def calculate_cost(row):
     rates = cost_rates.get(model, {})
     # Calculate cost for GPT and GPT-4o models
     if model in [
-        'gpt-4', 'gpt-4-turbo', 'gpt-4-32k', 'gpt-4-0125-preview', 'gpt-4-1106-preview',
+        'gpt-4', 'gpt-4-0613','gpt-4-turbo', 'gpt-4-32k', 'gpt-4-0125-preview', 'gpt-4-1106-preview',
         'gpt-4o-2024-05-13', 'gpt-4o-2024-08-06', 'gpt-4o-2024-11-20', 'gpt-4o',
         'gpt-4o-mini-2024-07-18', 'gpt-4o-mini',
         'gpt-3.5-turbo', 'gpt-3.5-turbo-0125', 'gpt-3.5-turbo-instruct', 
         'gpt-3.5-turbo-1106', 'gpt-3.5-turbo-0613', 'gpt-3.5-turbo-16k-0613',
-        'o1-preview', 'o1-mini', 'gpt-4o-realtime-preview', 
+        'o1-preview','o1-2024-12-17', 'o1-mini', 'gpt-4o-realtime-preview', 
         'chatgpt-4o-latest'
     ]:
         input_cost = (row['total_context_tokens'] / 1000) * rates.get('input', 0)
@@ -277,42 +286,86 @@ def case2(file_path):
         end_date=pd.NamedAgg(column='date', aggfunc='max')
     ).reset_index()
     
-    # Calculate costs
-    grouped_data['total_cost'] = grouped_data.apply(calculate_cost, axis=1)
+
+    # 비용 계산
+    grouped_data['총비용'] = grouped_data.apply(calculate_cost, axis=1)
     
-    # Overall statistics
+    # 전체 통계
     overall_start_date = filtered_data['date'].min()
     overall_end_date = filtered_data['date'].max()
     total_days = (overall_end_date - overall_start_date).days + 1  
     
     total_calls = grouped_data['total_requests'].sum()
-    total_cost = grouped_data['total_cost'].sum()
+    total_cost = grouped_data['총비용'].sum()
     daily_average_calls = total_calls / total_days
     daily_average_cost = total_cost / total_days
     
-    # Calculate daily averages per model
-    grouped_data['model_total_days'] = (grouped_data['end_date'] - grouped_data['start_date']).dt.days + 1
-    grouped_data['daily_average_calls'] = grouped_data['total_requests'] / grouped_data['model_total_days']
-    grouped_data['daily_average_cost'] = grouped_data['total_cost'] / grouped_data['model_total_days']
+    # 모델별 일평균 계산
+    grouped_data['모델_총일수'] = (grouped_data['end_date'] - grouped_data['start_date']).dt.days + 1
+    grouped_data['일평균_요청수'] = grouped_data['total_requests'] / grouped_data['모델_총일수']
+    grouped_data['일평균_비용'] = grouped_data['총비용'] / grouped_data['모델_총일수']
     
-    # Print results
-    print(f"Total calls: {total_calls}")
-    print(f"Total cost: ${total_cost:.2f}")
-    print(f"Daily average calls: {daily_average_calls:.2f}")
-    print(f"Daily average cost: ${daily_average_cost:.2f}")
+    # 결과 출력
+    print(f"총 요청 수: {total_calls}")
+    print(f"총 비용: ${total_cost:.2f}")
+    print(f"일평균 요청 수: {daily_average_calls:.2f}")
+    print(f"일평균 비용: ${daily_average_cost:.2f}")
     
-    print("\nUsage by model:")
-    print(grouped_data[['simplified_model', 'total_requests', 'total_cost', 'daily_average_calls', 'daily_average_cost']])
+    print("\n모델별 사용량:")
+    print(grouped_data[['simplified_model', 'total_requests', '총비용', '일평균_요청수', '일평균_비용']])
 
-# Main execution
+# 메인 실행
 if __name__ == "__main__":
-    # Choose case
-    choice = input("Choose a case (1: Use input_date, 2: Use CSV file): ")
+    # 케이스 선택
+    choice = input("케이스를 선택하세요 (1: 특정 날짜 입력, 2: CSV 파일 사용): ")
     if choice == '1':
-        input_date = input("Enter a date (YYYY-MM-DD): ")
+        input_date = input("날짜를 입력하세요 (YYYY-MM-DD): ")
         case1(input_date)
     elif choice == '2':
-        file_path = input("Enter the path to the CSV file: ")
+        file_path = input("CSV 파일 경로를 입력하세요: ")
         case2(file_path)
     else:
-        print("Invalid choice. Exiting.")
+        print("잘못된 선택입니다. 종료합니다.")
+
+
+
+
+    # Calculate costs
+#     grouped_data['total_cost'] = grouped_data.apply(calculate_cost, axis=1)
+    
+#     # Overall statistics
+#     overall_start_date = filtered_data['date'].min()
+#     overall_end_date = filtered_data['date'].max()
+#     total_days = (overall_end_date - overall_start_date).days + 1  
+    
+#     total_calls = grouped_data['total_requests'].sum()
+#     total_cost = grouped_data['total_cost'].sum()
+#     daily_average_calls = total_calls / total_days
+#     daily_average_cost = total_cost / total_days
+    
+#     # Calculate daily averages per model
+#     grouped_data['model_total_days'] = (grouped_data['end_date'] - grouped_data['start_date']).dt.days + 1
+#     grouped_data['daily_average_calls'] = grouped_data['total_requests'] / grouped_data['model_total_days']
+#     grouped_data['daily_average_cost'] = grouped_data['total_cost'] / grouped_data['model_total_days']
+    
+#     # Print results
+#     print(f"Total calls: {total_calls}")
+#     print(f"Total cost: ${total_cost:.2f}")
+#     print(f"Daily average calls: {daily_average_calls:.2f}")
+#     print(f"Daily average cost: ${daily_average_cost:.2f}")
+    
+#     print("\nUsage by model:")
+#     print(grouped_data[['simplified_model', 'total_requests', 'total_cost', 'daily_average_calls', 'daily_average_cost']])
+
+# # Main execution
+# if __name__ == "__main__":
+#     # Choose case
+#     choice = input("Choose a case (1: Use input_date, 2: Use CSV file): ")
+#     if choice == '1':
+#         input_date = input("Enter a date (YYYY-MM-DD): ")
+#         case1(input_date)
+#     elif choice == '2':
+#         file_path = input("Enter the path to the CSV file: ")
+#         case2(file_path)
+#     else:
+#         print("Invalid choice. Exiting.")
