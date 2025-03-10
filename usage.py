@@ -27,14 +27,14 @@ cost_rates = {
 
 
     # GPT-4o 
-    'gpt-4o-2024-05-13': {'input': 0.00500, 'output': 0.01500},
-    'gpt-4o-2024-08-06': {'input': 0.00375, 'output': 0.01500},
+    'gpt-4o-2024-05-13': {'input': 0.00500, 'output': 0.01000},
+    'gpt-4o-2024-08-06': {'input': 0.00250, 'output': 0.01000},
     'gpt-4o-2024-11-20': {'input': 0.00250, 'output': 0.01000},
     'gpt-4o': {'input': 0.00250, 'output': 0.01000},
     'gpt-4o-mini-2024-07-18': {'input': 0.000150, 'output': 0.000600},
     'gpt-4o-mini': {'input': 0.000150, 'output': 0.000600},
     'gpt-4o-realtime-preview': {'input': 0.00500, 'output': 0.02000},
-    'gpt-4o-audio-preview-2024-10-01': {'input': 0.10000, 'output': 0.20000},
+    'gpt-4o-audio-preview-2024-10-01': {'input': 0.00250, 'output': 0.010000},
 
     # Text Embedding
     'text-embedding-3-small': {'input': 0.000020},
