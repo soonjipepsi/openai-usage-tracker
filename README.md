@@ -1,7 +1,7 @@
 # OpenAI API Usage Tracker
 
-**Version**: 0.0.4 
-**Release Date**: Feb 4, 2025
+**Version**: 0.0.5 
+**Release Date**: Mar 10, 2025
 
 This project is a Python script designed to track usage and cost data from the OpenAI API. It fetches the data either directly from the API or from a CSV file, processes it, and calculates the total usage cost based on the model and token consumption.
 
